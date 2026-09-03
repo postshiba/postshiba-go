@@ -1,0 +1,16 @@
+name: Close mirror pull requests
+
+on:
+  pull_request_target:
+
+jobs:
+  close:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Close
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr close "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --comment "This repo is a one-way mirror of https://github.com/postshiba/sdks. Open the pull request there."
