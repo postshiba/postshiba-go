@@ -17,7 +17,7 @@ This module is not on a package registry yet. Install from GitHub.
 ## Send an email
 
 ```go
-client := postshiba.NewClient(os.Getenv("POSTSHIBA_API_KEY"), postshiba.WithTeamID("1"))
+client := postshiba.NewClient(os.Getenv("POSTSHIBA_API_KEY"), postshiba.WithTeamID("KjkAJW"))
 
 res, err := client.EmailsSend(ctx, map[string]any{
 	"from":    "hello@mail.example.com",
@@ -28,10 +28,16 @@ res, err := client.EmailsSend(ctx, map[string]any{
 })
 ```
 
+Pass a cluster id to pin `X-Capsule-Cluster-Id`. Omit it and the header is not sent.
+
+```go
+res, err := client.EmailsSend(ctx, body, &postshiba.SendOptions{ClusterID: "NmQpXr"})
+```
+
 Cluster send can set `Idempotency-Key` and `"sandbox": true`.
 
 ```go
-res, err := client.EmailsSendOnCluster(ctx, "4", body, &postshiba.SendOnClusterOptions{
+res, err := client.EmailsSendOnCluster(ctx, "NmQpXr", body, &postshiba.SendOnClusterOptions{
 	IdempotencyKey: "idem-1",
 	Sandbox:        true,
 })
@@ -49,78 +55,78 @@ me, err := client.UsersMe(ctx)
 
 ```go
 clusters, err := client.ClustersList(ctx)
-cluster, err := client.ClustersGet(ctx, "4")
+cluster, err := client.ClustersGet(ctx, "NmQpXr")
 cluster, err := client.ClustersCreate(ctx, map[string]any{
 	"cluster": map[string]any{"name": "edge", "size": "small", "region": "manual", "plan": "nano"},
 })
-cluster, err := client.ClustersUpdate(ctx, "4", map[string]any{
+cluster, err := client.ClustersUpdate(ctx, "NmQpXr", map[string]any{
 	"cluster": map[string]any{"plan": "small"},
 })
-cluster, err := client.ClustersSuspend(ctx, "4")
-cluster, err := client.ClustersResume(ctx, "4")
-cluster, err := client.ClustersDelete(ctx, "4")
+cluster, err := client.ClustersSuspend(ctx, "NmQpXr")
+cluster, err := client.ClustersResume(ctx, "NmQpXr")
+cluster, err := client.ClustersDelete(ctx, "NmQpXr")
 ```
 
 ### Sending domains
 
 ```go
 domains, err := client.SendingDomainsList(ctx)
-domain, err := client.SendingDomainsGet(ctx, "8")
+domain, err := client.SendingDomainsGet(ctx, "HsVtYk")
 domain, err := client.SendingDomainsCreate(ctx, map[string]any{
-	"sending_domain": map[string]any{"name": "mail.example.com", "tenant_id": 12},
+	"sending_domain": map[string]any{"name": "mail.example.com", "tenant_id": "WbLcFd"},
 })
-domain, err := client.SendingDomainsVerify(ctx, "8")
-domain, err := client.SendingDomainsSuspend(ctx, "8")
-domain, err := client.SendingDomainsResume(ctx, "8")
-domain, err := client.SendingDomainsMakePrimary(ctx, "8")
-_, err = client.SendingDomainsDelete(ctx, "8")
+domain, err := client.SendingDomainsVerify(ctx, "HsVtYk")
+domain, err := client.SendingDomainsSuspend(ctx, "HsVtYk")
+domain, err := client.SendingDomainsResume(ctx, "HsVtYk")
+domain, err := client.SendingDomainsMakePrimary(ctx, "HsVtYk")
+_, err = client.SendingDomainsDelete(ctx, "HsVtYk")
 ```
 
 ### Tenants
 
 ```go
 tenants, err := client.TenantsList(ctx)
-tenant, err := client.TenantsGet(ctx, "12")
+tenant, err := client.TenantsGet(ctx, "WbLcFd")
 tenant, err := client.TenantsCreate(ctx, map[string]any{
 	"tenant": map[string]any{"name": "Acme Florist"},
 })
-_, err = client.TenantsDelete(ctx, "12")
+_, err = client.TenantsDelete(ctx, "WbLcFd")
 ```
 
 ### Inboxes
 
 ```go
 inboxes, err := client.InboxesList(ctx)
-inbox, err := client.InboxesGet(ctx, "3")
+inbox, err := client.InboxesGet(ctx, "PqRzMn")
 inbox, err := client.InboxesCreate(ctx, map[string]any{
 	"inbox": map[string]any{"name": "agent", "webhook_url": "https://hooks.example.com/mail"},
 })
-inbox, err := client.InboxesVerify(ctx, "3")
-inbox, err := client.InboxesDelete(ctx, "3")
+inbox, err := client.InboxesVerify(ctx, "PqRzMn")
+inbox, err := client.InboxesDelete(ctx, "PqRzMn")
 ```
 
 ### Messages
 
 ```go
-messages, err := client.MessagesList(ctx, "3")
-message, err := client.MessagesGet(ctx, "3", "21")
-file, err := client.MessagesDownloadAttachment(ctx, "3", "21", 0)
+messages, err := client.MessagesList(ctx, "PqRzMn")
+message, err := client.MessagesGet(ctx, "PqRzMn", "GxTyVu")
+file, err := client.MessagesDownloadAttachment(ctx, "PqRzMn", "GxTyVu", 1)
 ```
 
 ### Events
 
 ```go
-events, err := client.EventsList(ctx, "4")
-event, err := client.EventsGet(ctx, "44")
+events, err := client.EventsList(ctx, "NmQpXr")
+event, err := client.EventsGet(ctx, "JkLmNp")
 ```
 
 ### SMTP credentials
 
 ```go
-cred, err := client.SMTPCredentialsCreate(ctx, "4", map[string]any{
-	"smtp_credential": map[string]any{"tenant_id": 12},
+cred, err := client.SMTPCredentialsCreate(ctx, "NmQpXr", map[string]any{
+	"smtp_credential": map[string]any{"tenant_id": "WbLcFd"},
 })
-_, err = client.SMTPCredentialsDelete(ctx, "4", "9")
+_, err = client.SMTPCredentialsDelete(ctx, "NmQpXr", "RvWsXq")
 ```
 
 The password is present on create only.
@@ -129,21 +135,21 @@ The password is present on create only.
 
 ```go
 hooks, err := client.WebhooksList(ctx)
-hook, err := client.WebhooksGet(ctx, "2")
+hook, err := client.WebhooksGet(ctx, "CdFgHj")
 hook, err := client.WebhooksCreate(ctx, map[string]any{
 	"webhook_endpoint": map[string]any{
 		"url":         "https://hooks.example.com/capsule",
 		"event_types": []string{"delivered", "bounce"},
-		"cluster_id":  4,
+		"cluster_id":  "NmQpXr",
 	},
 })
-hook, err = client.WebhooksUpdate(ctx, "2", map[string]any{
+hook, err = client.WebhooksUpdate(ctx, "CdFgHj", map[string]any{
 	"webhook_endpoint": map[string]any{
 		"enabled":     false,
 		"event_types": []string{"delivered", "bounce"},
 	},
 })
-_, err = client.WebhooksDelete(ctx, "2")
+_, err = client.WebhooksDelete(ctx, "CdFgHj")
 ```
 
 The secret is present on get and create. It is omitted on list and update.
@@ -153,9 +159,9 @@ The secret is present on get and create. It is omitted on list and update.
 ```go
 rows, err := client.SuppressionsList(ctx)
 row, err := client.SuppressionsCreate(ctx, map[string]any{
-	"suppression": map[string]any{"email": "blocked@example.com", "tenant_id": 12},
+	"suppression": map[string]any{"email": "blocked@example.com", "tenant_id": "WbLcFd"},
 })
-_, err = client.SuppressionsDelete(ctx, "7")
+_, err = client.SuppressionsDelete(ctx, "YtReWq")
 ```
 
 ### Firewall
@@ -168,7 +174,7 @@ fw, err := client.FirewallUpdate(ctx, map[string]any{
 entry, err := client.FirewallAddEntry(ctx, map[string]any{
 	"firewall_entry": map[string]any{"list": "deny", "value": "mailinator.com"},
 })
-_, err = client.FirewallDeleteEntry(ctx, "3")
+_, err = client.FirewallDeleteEntry(ctx, "PqRzMn")
 ```
 
 ## Verify webhooks

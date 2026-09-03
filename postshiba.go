@@ -71,6 +71,11 @@ func (e *Error) Error() string {
 	return e.Err
 }
 
+// SendOptions pins emails.send to a cluster via X-Capsule-Cluster-Id.
+type SendOptions struct {
+	ClusterID string
+}
+
 // SendOnClusterOptions adds Idempotency-Key and sandbox to a cluster send.
 type SendOnClusterOptions struct {
 	IdempotencyKey string
@@ -150,8 +155,12 @@ func (c *Client) UsersMe(ctx context.Context) (any, error) {
 	return c.do(ctx, http.MethodGet, "/api/v1/users/me", nil, nil)
 }
 
-func (c *Client) EmailsSend(ctx context.Context, body any) (any, error) {
-	return c.do(ctx, http.MethodPost, "/api/v1/emails", body, nil)
+func (c *Client) EmailsSend(ctx context.Context, body any, opts ...*SendOptions) (any, error) {
+	var extra http.Header
+	if len(opts) > 0 && opts[0] != nil && opts[0].ClusterID != "" {
+		extra = http.Header{"X-Capsule-Cluster-Id": {opts[0].ClusterID}}
+	}
+	return c.do(ctx, http.MethodPost, "/api/v1/emails", body, extra)
 }
 
 func (c *Client) EmailsSendOnCluster(ctx context.Context, clusterID string, body map[string]any, opts *SendOnClusterOptions) (any, error) {

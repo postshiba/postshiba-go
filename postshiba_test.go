@@ -15,17 +15,17 @@ import (
 )
 
 const (
-	teamID           = "1"
-	clusterID        = "4"
-	sendingDomainID  = "8"
-	tenantID         = "12"
-	inboxID          = "3"
-	messageID        = "21"
-	eventID          = "44"
-	smtpCredentialID = "9"
-	suppressionID    = "7"
-	firewallEntryID  = "3"
-	webhookID        = "2"
+	teamID           = "KjkAJW"
+	clusterID        = "NmQpXr"
+	sendingDomainID  = "HsVtYk"
+	tenantID         = "WbLcFd"
+	inboxID          = "PqRzMn"
+	messageID        = "GxTyVu"
+	eventID          = "JkLmNp"
+	smtpCredentialID = "RvWsXq"
+	suppressionID    = "YtReWq"
+	firewallEntryID  = "BnMkLo"
+	webhookID        = "CdFgHj"
 )
 
 func fixturePath(name string) string {
@@ -152,7 +152,7 @@ func TestEmailsSend(t *testing.T) {
 		"POST /api/v1/emails": {fixture: "email_send_response"},
 	})
 	c := clientFor(srv)
-	got, err := c.EmailsSend(context.Background(), asMap(t, "email_send_request"))
+	got, err := c.EmailsSend(context.Background(), asMap(t, "email_send_request"), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -164,13 +164,34 @@ func TestEmailsSend(t *testing.T) {
 	if !reflect.DeepEqual(sent, loadJSON(t, "email_send_request")) {
 		t.Fatalf("body = %#v", sent)
 	}
+	if cap.req.Header.Get("X-Capsule-Cluster-Id") != "" {
+		t.Fatalf("X-Capsule-Cluster-Id = %q", cap.req.Header.Get("X-Capsule-Cluster-Id"))
+	}
+}
+
+func TestEmailsSendPinsCluster(t *testing.T) {
+	srv, cap := newMux(t, map[string]route{
+		"POST /api/v1/emails": {fixture: "email_send_response"},
+	})
+	c := clientFor(srv)
+	got, err := c.EmailsSend(context.Background(), asMap(t, "email_send_request"), &SendOptions{ClusterID: clusterID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	equalJSON(t, got, "email_send_response")
+	if cap.req.URL.Path != "/api/v1/emails" {
+		t.Fatalf("path = %s", cap.req.URL.Path)
+	}
+	if cap.req.Header.Get("X-Capsule-Cluster-Id") != clusterID {
+		t.Fatalf("X-Capsule-Cluster-Id = %q", cap.req.Header.Get("X-Capsule-Cluster-Id"))
+	}
 }
 
 func TestEmailsSendOnClusterIdempotencyAndSandbox(t *testing.T) {
 	var gotKey string
 	var sent map[string]any
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost || r.URL.Path != "/api/v1/teams/1/clusters/4/sends" {
+		if r.Method != http.MethodPost || r.URL.Path != "/api/v1/teams/KjkAJW/clusters/NmQpXr/sends" {
 			t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
 			http.NotFound(w, r)
 			return
@@ -213,50 +234,50 @@ func TestEveryMethod(t *testing.T) {
 	routes := map[string]route{
 		"GET /api/v1/users/me":                                    {fixture: "whoami"},
 		"POST /api/v1/emails":                                     {fixture: "email_send_response"},
-		"POST /api/v1/teams/1/clusters/4/sends":                   {fixture: "email_sandbox_response"},
-		"GET /api/v1/teams/1/clusters":                            {fixture: "cluster", list: true},
-		"GET /api/v1/clusters/4":                                  {fixture: "cluster"},
-		"POST /api/v1/teams/1/clusters":                           {fixture: "cluster"},
-		"PATCH /api/v1/clusters/4":                                {fixture: "cluster_updated"},
-		"POST /api/v1/clusters/4/suspend":                         {fixture: "cluster_suspended"},
-		"POST /api/v1/clusters/4/resume":                          {fixture: "cluster"},
-		"DELETE /api/v1/clusters/4":                               {fixture: "cluster_deprovisioned"},
-		"GET /api/v1/teams/1/sending_domains":                     {fixture: "sending_domain", list: true},
-		"GET /api/v1/sending_domains/8":                           {fixture: "sending_domain"},
-		"POST /api/v1/teams/1/sending_domains":                    {fixture: "sending_domain"},
-		"POST /api/v1/sending_domains/8/verify":                   {fixture: "sending_domain"},
-		"POST /api/v1/sending_domains/8/suspend":                  {fixture: "sending_domain_suspended"},
-		"POST /api/v1/sending_domains/8/resume":                   {fixture: "sending_domain"},
-		"POST /api/v1/sending_domains/8/make_primary":             {fixture: "sending_domain_primary"},
-		"DELETE /api/v1/sending_domains/8":                        {fixture: "empty"},
-		"GET /api/v1/teams/1/tenants":                             {fixture: "tenant", list: true},
-		"GET /api/v1/tenants/12":                                  {fixture: "tenant"},
-		"POST /api/v1/teams/1/tenants":                            {fixture: "tenant"},
-		"DELETE /api/v1/tenants/12":                               {fixture: "empty"},
-		"GET /api/v1/teams/1/inboxes":                             {fixture: "inbox_index", list: true},
-		"GET /api/v1/inboxes/3":                                   {fixture: "inbox"},
-		"POST /api/v1/teams/1/inboxes":                            {fixture: "inbox"},
-		"POST /api/v1/inboxes/3/verify":                           {fixture: "inbox_index"},
-		"DELETE /api/v1/inboxes/3":                                {fixture: "inbox_index"},
-		"GET /api/v1/inboxes/3/inbound_messages":                  {fixture: "message", list: true},
-		"GET /api/v1/inboxes/3/inbound_messages/21":               {fixture: "message_show"},
-		"GET /api/v1/inboxes/3/inbound_messages/21/attachments/1": {body: []byte("png")},
-		"GET /api/v1/teams/1/clusters/4/message_events":           {fixture: "event", list: true},
-		"GET /api/v1/message_events/44":                           {fixture: "event"},
-		"POST /api/v1/teams/1/clusters/4/smtp_credentials":        {fixture: "smtp_credential_create"},
-		"DELETE /api/v1/teams/1/clusters/4/smtp_credentials/9":    {fixture: "smtp_credential_deleted"},
-		"GET /api/v1/teams/1/webhook_endpoints":                   {fixture: "webhook", list: true},
-		"GET /api/v1/webhook_endpoints/2":                         {fixture: "webhook_show"},
-		"POST /api/v1/teams/1/webhook_endpoints":                  {fixture: "webhook_show"},
-		"PATCH /api/v1/webhook_endpoints/2":                       {fixture: "webhook"},
-		"DELETE /api/v1/webhook_endpoints/2":                      {fixture: "empty"},
-		"GET /api/v1/teams/1/suppressions":                        {fixture: "suppression", list: true},
-		"POST /api/v1/teams/1/suppressions":                       {fixture: "suppression"},
-		"DELETE /api/v1/suppressions/7":                           {fixture: "empty"},
-		"GET /api/v1/teams/1/firewall":                            {fixture: "firewall"},
-		"PATCH /api/v1/teams/1/firewall":                          {fixture: "firewall"},
-		"POST /api/v1/teams/1/firewall_entries":                   {fixture: "firewall_entry"},
-		"DELETE /api/v1/firewall_entries/3":                       {fixture: "empty"},
+		"POST /api/v1/teams/KjkAJW/clusters/NmQpXr/sends":                   {fixture: "email_sandbox_response"},
+		"GET /api/v1/teams/KjkAJW/clusters":                            {fixture: "cluster", list: true},
+		"GET /api/v1/clusters/NmQpXr":                                  {fixture: "cluster"},
+		"POST /api/v1/teams/KjkAJW/clusters":                           {fixture: "cluster"},
+		"PATCH /api/v1/clusters/NmQpXr":                                {fixture: "cluster_updated"},
+		"POST /api/v1/clusters/NmQpXr/suspend":                         {fixture: "cluster_suspended"},
+		"POST /api/v1/clusters/NmQpXr/resume":                          {fixture: "cluster"},
+		"DELETE /api/v1/clusters/NmQpXr":                               {fixture: "cluster_deprovisioned"},
+		"GET /api/v1/teams/KjkAJW/sending_domains":                     {fixture: "sending_domain", list: true},
+		"GET /api/v1/sending_domains/HsVtYk":                           {fixture: "sending_domain"},
+		"POST /api/v1/teams/KjkAJW/sending_domains":                    {fixture: "sending_domain"},
+		"POST /api/v1/sending_domains/HsVtYk/verify":                   {fixture: "sending_domain"},
+		"POST /api/v1/sending_domains/HsVtYk/suspend":                  {fixture: "sending_domain_suspended"},
+		"POST /api/v1/sending_domains/HsVtYk/resume":                   {fixture: "sending_domain"},
+		"POST /api/v1/sending_domains/HsVtYk/make_primary":             {fixture: "sending_domain_primary"},
+		"DELETE /api/v1/sending_domains/HsVtYk":                        {fixture: "empty"},
+		"GET /api/v1/teams/KjkAJW/tenants":                             {fixture: "tenant", list: true},
+		"GET /api/v1/tenants/WbLcFd":                                  {fixture: "tenant"},
+		"POST /api/v1/teams/KjkAJW/tenants":                            {fixture: "tenant"},
+		"DELETE /api/v1/tenants/WbLcFd":                               {fixture: "empty"},
+		"GET /api/v1/teams/KjkAJW/inboxes":                             {fixture: "inbox_index", list: true},
+		"GET /api/v1/inboxes/PqRzMn":                                   {fixture: "inbox"},
+		"POST /api/v1/teams/KjkAJW/inboxes":                            {fixture: "inbox"},
+		"POST /api/v1/inboxes/PqRzMn/verify":                           {fixture: "inbox_index"},
+		"DELETE /api/v1/inboxes/PqRzMn":                                {fixture: "inbox_index"},
+		"GET /api/v1/inboxes/PqRzMn/inbound_messages":                  {fixture: "message", list: true},
+		"GET /api/v1/inboxes/PqRzMn/inbound_messages/GxTyVu":               {fixture: "message_show"},
+		"GET /api/v1/inboxes/PqRzMn/inbound_messages/GxTyVu/attachments/1": {body: []byte("png")},
+		"GET /api/v1/teams/KjkAJW/clusters/NmQpXr/message_events":           {fixture: "event", list: true},
+		"GET /api/v1/message_events/JkLmNp":                           {fixture: "event"},
+		"POST /api/v1/teams/KjkAJW/clusters/NmQpXr/smtp_credentials":        {fixture: "smtp_credential_create"},
+		"DELETE /api/v1/teams/KjkAJW/clusters/NmQpXr/smtp_credentials/RvWsXq":    {fixture: "smtp_credential_deleted"},
+		"GET /api/v1/teams/KjkAJW/webhook_endpoints":                   {fixture: "webhook", list: true},
+		"GET /api/v1/webhook_endpoints/CdFgHj":                         {fixture: "webhook_show"},
+		"POST /api/v1/teams/KjkAJW/webhook_endpoints":                  {fixture: "webhook_show"},
+		"PATCH /api/v1/webhook_endpoints/CdFgHj":                       {fixture: "webhook"},
+		"DELETE /api/v1/webhook_endpoints/CdFgHj":                      {fixture: "empty"},
+		"GET /api/v1/teams/KjkAJW/suppressions":                        {fixture: "suppression", list: true},
+		"POST /api/v1/teams/KjkAJW/suppressions":                       {fixture: "suppression"},
+		"DELETE /api/v1/suppressions/YtReWq":                           {fixture: "empty"},
+		"GET /api/v1/teams/KjkAJW/firewall":                            {fixture: "firewall"},
+		"PATCH /api/v1/teams/KjkAJW/firewall":                          {fixture: "firewall"},
+		"POST /api/v1/teams/KjkAJW/firewall_entries":                   {fixture: "firewall_entry"},
+		"DELETE /api/v1/firewall_entries/BnMkLo":                       {fixture: "empty"},
 	}
 	srv, cap := newMux(t, routes)
 	c := clientFor(srv)
@@ -268,7 +289,7 @@ func TestEveryMethod(t *testing.T) {
 		list bool
 	}{
 		{"users.me", func() (any, error) { return c.UsersMe(ctx) }, "whoami", false},
-		{"emails.send", func() (any, error) { return c.EmailsSend(ctx, asMap(t, "email_send_request")) }, "email_send_response", false},
+		{"emails.send", func() (any, error) { return c.EmailsSend(ctx, asMap(t, "email_send_request"), nil) }, "email_send_response", false},
 		{"emails.sendOnCluster", func() (any, error) {
 			return c.EmailsSendOnCluster(ctx, clusterID, asMap(t, "email_send_request"), nil)
 		}, "email_sandbox_response", false},
@@ -359,7 +380,7 @@ func TestEveryMethod(t *testing.T) {
 	if string(raw) != "png" {
 		t.Fatalf("attachment = %q", raw)
 	}
-	if cap.req.URL.Path != "/api/v1/inboxes/3/inbound_messages/21/attachments/1" {
+	if cap.req.URL.Path != "/api/v1/inboxes/PqRzMn/inbound_messages/GxTyVu/attachments/1" {
 		t.Fatalf("attachment path = %s", cap.req.URL.Path)
 	}
 }
@@ -377,7 +398,7 @@ func TestAPIErrors(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.fixture, func(t *testing.T) {
 			srv, _ := newMux(t, map[string]route{
-				"GET /api/v1/teams/1/clusters": {status: tc.status, fixture: tc.fixture},
+				"GET /api/v1/teams/KjkAJW/clusters": {status: tc.status, fixture: tc.fixture},
 			})
 			_, err := clientFor(srv).ClustersList(context.Background())
 			var apiErr *Error
@@ -415,8 +436,8 @@ func TestVerifyWebhook(t *testing.T) {
 func TestSMTPPasswordCreateAndDelete(t *testing.T) {
 	ctx := context.Background()
 	srv, _ := newMux(t, map[string]route{
-		"POST /api/v1/teams/1/clusters/4/smtp_credentials":     {fixture: "smtp_credential_create"},
-		"DELETE /api/v1/teams/1/clusters/4/smtp_credentials/9": {fixture: "smtp_credential_deleted"},
+		"POST /api/v1/teams/KjkAJW/clusters/NmQpXr/smtp_credentials":     {fixture: "smtp_credential_create"},
+		"DELETE /api/v1/teams/KjkAJW/clusters/NmQpXr/smtp_credentials/RvWsXq": {fixture: "smtp_credential_deleted"},
 	})
 	c := clientFor(srv)
 	created, err := c.SMTPCredentialsCreate(ctx, clusterID, asMap(t, "smtp_credential_create_request"))
@@ -438,10 +459,10 @@ func TestSMTPPasswordCreateAndDelete(t *testing.T) {
 func TestWebhookSecretListGetCreate(t *testing.T) {
 	ctx := context.Background()
 	srv, _ := newMux(t, map[string]route{
-		"GET /api/v1/teams/1/webhook_endpoints":  {fixture: "webhook", list: true},
-		"GET /api/v1/webhook_endpoints/2":        {fixture: "webhook_show"},
-		"POST /api/v1/teams/1/webhook_endpoints": {fixture: "webhook_show"},
-		"PATCH /api/v1/webhook_endpoints/2":      {fixture: "webhook"},
+		"GET /api/v1/teams/KjkAJW/webhook_endpoints":  {fixture: "webhook", list: true},
+		"GET /api/v1/webhook_endpoints/CdFgHj":        {fixture: "webhook_show"},
+		"POST /api/v1/teams/KjkAJW/webhook_endpoints": {fixture: "webhook_show"},
+		"PATCH /api/v1/webhook_endpoints/CdFgHj":      {fixture: "webhook"},
 	})
 	c := clientFor(srv)
 	list, err := c.WebhooksList(ctx)
