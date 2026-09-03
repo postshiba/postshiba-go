@@ -471,7 +471,7 @@ func TestMissingTeamID(t *testing.T) {
 
 func TestDefaultBaseURL(t *testing.T) {
 	c := NewClient("key")
-	if c.baseURL != "https://postshiba.com" {
+	if c.baseURL != "https://app.postshiba.com" {
 		t.Fatalf("baseURL = %q", c.baseURL)
 	}
 }

@@ -12,7 +12,7 @@ This module is not on a package registry yet. Install from GitHub.
 
 ## How It Works
 
-`NewClient` sends JSON to `https://postshiba.com/api/v1` with a Bearer token. Team-scoped paths use `WithTeamID`. `GET /users/me` does not return a team id, so the client will not guess one.
+`NewClient` sends JSON to `https://app.postshiba.com/api/v1` with a Bearer token. Team-scoped paths use `WithTeamID`. `GET /users/me` does not return a team id, so the client will not guess one.
 
 ## Send an email
 

@@ -16,7 +16,7 @@ import (
 	"strings"
 )
 
-const defaultBaseURL = "https://postshiba.com"
+const defaultBaseURL = "https://app.postshiba.com"
 
 // Client calls the PostShiba HTTP API.
 type Client struct {
