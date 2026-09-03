@@ -362,6 +362,14 @@ func (c *Client) WebhooksCreate(ctx context.Context, body any) (any, error) {
 	return c.do(ctx, http.MethodPost, path, body, nil)
 }
 
+func (c *Client) WebhooksUpdate(ctx context.Context, id string, body any) (any, error) {
+	return c.do(ctx, http.MethodPatch, "/api/v1/webhook_endpoints/"+id, body, nil)
+}
+
+func (c *Client) WebhooksDelete(ctx context.Context, id string) (any, error) {
+	return c.do(ctx, http.MethodDelete, "/api/v1/webhook_endpoints/"+id, nil, nil)
+}
+
 func (c *Client) SuppressionsList(ctx context.Context) (any, error) {
 	path, err := c.teamsPath("/suppressions")
 	if err != nil {

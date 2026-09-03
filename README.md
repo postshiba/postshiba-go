@@ -137,9 +137,16 @@ hook, err := client.WebhooksCreate(ctx, map[string]any{
 		"cluster_id":  4,
 	},
 })
+hook, err = client.WebhooksUpdate(ctx, "2", map[string]any{
+	"webhook_endpoint": map[string]any{
+		"enabled":     false,
+		"event_types": []string{"delivered", "bounce"},
+	},
+})
+_, err = client.WebhooksDelete(ctx, "2")
 ```
 
-The secret is present on get and create. It is omitted on list. The API has no update or delete.
+The secret is present on get and create. It is omitted on list and update.
 
 ### Suppressions
 

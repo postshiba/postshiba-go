@@ -248,6 +248,8 @@ func TestEveryMethod(t *testing.T) {
 		"GET /api/v1/teams/1/webhook_endpoints":                   {fixture: "webhook", list: true},
 		"GET /api/v1/webhook_endpoints/2":                         {fixture: "webhook_show"},
 		"POST /api/v1/teams/1/webhook_endpoints":                  {fixture: "webhook_show"},
+		"PATCH /api/v1/webhook_endpoints/2":                       {fixture: "webhook"},
+		"DELETE /api/v1/webhook_endpoints/2":                      {fixture: "empty"},
 		"GET /api/v1/teams/1/suppressions":                        {fixture: "suppression", list: true},
 		"POST /api/v1/teams/1/suppressions":                       {fixture: "suppression"},
 		"DELETE /api/v1/suppressions/7":                           {fixture: "empty"},
@@ -317,6 +319,10 @@ func TestEveryMethod(t *testing.T) {
 		{"webhooks.create", func() (any, error) {
 			return c.WebhooksCreate(ctx, asMap(t, "webhook_create_request"))
 		}, "webhook_show", false},
+		{"webhooks.update", func() (any, error) {
+			return c.WebhooksUpdate(ctx, webhookID, asMap(t, "webhook_update_request"))
+		}, "webhook", false},
+		{"webhooks.delete", func() (any, error) { return c.WebhooksDelete(ctx, webhookID) }, "empty", false},
 		{"suppressions.list", func() (any, error) { return c.SuppressionsList(ctx) }, "suppression", true},
 		{"suppressions.create", func() (any, error) {
 			return c.SuppressionsCreate(ctx, asMap(t, "suppression_create_request"))
@@ -435,6 +441,7 @@ func TestWebhookSecretListGetCreate(t *testing.T) {
 		"GET /api/v1/teams/1/webhook_endpoints":  {fixture: "webhook", list: true},
 		"GET /api/v1/webhook_endpoints/2":        {fixture: "webhook_show"},
 		"POST /api/v1/teams/1/webhook_endpoints": {fixture: "webhook_show"},
+		"PATCH /api/v1/webhook_endpoints/2":      {fixture: "webhook"},
 	})
 	c := clientFor(srv)
 	list, err := c.WebhooksList(ctx)
@@ -459,6 +466,14 @@ func TestWebhookSecretListGetCreate(t *testing.T) {
 	if created.(map[string]any)["secret"] != "hex-secret" {
 		t.Fatalf("create secret = %#v", created)
 	}
+	updated, err := c.WebhooksUpdate(ctx, webhookID, asMap(t, "webhook_update_request"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := updated.(map[string]any)["secret"]; ok {
+		t.Fatal("update leaked secret")
+	}
+	equalJSON(t, updated, "webhook")
 }
 
 func TestMissingTeamID(t *testing.T) {
