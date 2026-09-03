@@ -179,7 +179,7 @@ HMAC-SHA256 of `{timestamp}.{rawBody}` compared to `X-Capsule-Signature`. A `sha
 err := postshiba.VerifyWebhook(secret, timestamp, signature, rawBody)
 ```
 
-## Errors
+## Errors and throttling
 
 Non-2xx responses return `*postshiba.Error` with `Err`, `Field`, and `Message`. `Err` is the JSON `error` key. Go uses `Error()` for the error interface.
 
@@ -189,6 +189,8 @@ if errors.As(err, &apiErr) {
 	fmt.Println(apiErr.Err, apiErr.Field, apiErr.Message)
 }
 ```
+
+A `429` response with `error` `throttled` means the cluster hit its hourly send limit. Do not retry that send immediately. Immediate retries hit the same cap. Wait until the next hour. The client does not delay for you. In a queued worker, check `apiErr.Err == "throttled"` before sending again.
 
 A team-scoped call without `WithTeamID` returns an error. The client does not read a team id from `UsersMe`.
 
