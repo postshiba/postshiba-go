@@ -26,6 +26,7 @@ const (
 	suppressionID    = "YtReWq"
 	firewallEntryID  = "BnMkLo"
 	webhookID        = "CdFgHj"
+	templateID       = "TpLmQr"
 )
 
 func fixturePath(name string) string {
@@ -169,6 +170,25 @@ func TestEmailsSend(t *testing.T) {
 	}
 }
 
+func TestEmailsSendTemplate(t *testing.T) {
+	srv, cap := newMux(t, map[string]route{
+		"POST /api/v1/emails": {fixture: "email_send_template_response"},
+	})
+	c := clientFor(srv)
+	got, err := c.EmailsSend(context.Background(), asMap(t, "email_send_template_request"), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	equalJSON(t, got, "email_send_template_response")
+	var sent any
+	if err := json.Unmarshal(cap.body, &sent); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(sent, loadJSON(t, "email_send_template_request")) {
+		t.Fatalf("body = %#v", sent)
+	}
+}
+
 func TestEmailsSendPinsCluster(t *testing.T) {
 	srv, cap := newMux(t, map[string]route{
 		"POST /api/v1/emails": {fixture: "email_send_response"},
@@ -242,9 +262,20 @@ func TestEveryMethod(t *testing.T) {
 		"POST /api/v1/clusters/NmQpXr/suspend":                         {fixture: "cluster_suspended"},
 		"POST /api/v1/clusters/NmQpXr/resume":                          {fixture: "cluster"},
 		"DELETE /api/v1/clusters/NmQpXr":                               {fixture: "cluster_deprovisioned"},
+		"POST /api/v1/clusters/NmQpXr/boost":                           {fixture: "cluster_boosted"},
+		"POST /api/v1/clusters/NmQpXr/extend_boost":                    {fixture: "cluster_boosted"},
+		"POST /api/v1/clusters/NmQpXr/cancel_boost":                    {fixture: "cluster"},
+		"GET /api/v1/teams/KjkAJW/network":                             {fixture: "network", list: true},
+		"POST /api/v1/teams/KjkAJW/network":                            {fixture: "network_assigned"},
+		"POST /api/v1/teams/KjkAJW/network/assign":                     {fixture: "network_dedicated"},
+		"POST /api/v1/teams/KjkAJW/network/unassign":                   {fixture: "network"},
+		"POST /api/v1/teams/KjkAJW/network/switch":                     {fixture: "network_assigned"},
+		"POST /api/v1/teams/KjkAJW/network/release":                    {fixture: "network_released"},
 		"GET /api/v1/teams/KjkAJW/sending_domains":                     {fixture: "sending_domain", list: true},
 		"GET /api/v1/sending_domains/HsVtYk":                           {fixture: "sending_domain"},
 		"POST /api/v1/teams/KjkAJW/sending_domains":                    {fixture: "sending_domain"},
+		"PATCH /api/v1/sending_domains/HsVtYk":                         {fixture: "sending_domain_updated"},
+		"POST /api/v1/sending_domains/HsVtYk/refresh":                  {fixture: "sending_domain"},
 		"POST /api/v1/sending_domains/HsVtYk/verify":                   {fixture: "sending_domain"},
 		"POST /api/v1/sending_domains/HsVtYk/suspend":                  {fixture: "sending_domain_suspended"},
 		"POST /api/v1/sending_domains/HsVtYk/resume":                   {fixture: "sending_domain"},
@@ -263,7 +294,15 @@ func TestEveryMethod(t *testing.T) {
 		"GET /api/v1/inboxes/PqRzMn/inbound_messages/GxTyVu":               {fixture: "message_show"},
 		"GET /api/v1/inboxes/PqRzMn/inbound_messages/GxTyVu/attachments/1": {body: []byte("png")},
 		"GET /api/v1/teams/KjkAJW/clusters/NmQpXr/message_events":           {fixture: "event", list: true},
+		"GET /api/v1/teams/KjkAJW/message_events":                       {fixture: "event", list: true},
 		"GET /api/v1/message_events/JkLmNp":                           {fixture: "event"},
+		"GET /api/v1/teams/KjkAJW/templates":                           {fixture: "template", list: true},
+		"GET /api/v1/templates/TpLmQr":                                 {fixture: "template"},
+		"POST /api/v1/teams/KjkAJW/templates":                          {fixture: "template"},
+		"PATCH /api/v1/templates/TpLmQr":                               {fixture: "template_updated"},
+		"POST /api/v1/templates/TpLmQr/publish":                        {fixture: "template"},
+		"POST /api/v1/templates/TpLmQr/duplicate":                      {fixture: "template_duplicated"},
+		"DELETE /api/v1/templates/TpLmQr":                              {fixture: "empty"},
 		"POST /api/v1/teams/KjkAJW/clusters/NmQpXr/smtp_credentials":        {fixture: "smtp_credential_create"},
 		"DELETE /api/v1/teams/KjkAJW/clusters/NmQpXr/smtp_credentials/RvWsXq":    {fixture: "smtp_credential_deleted"},
 		"GET /api/v1/teams/KjkAJW/webhook_endpoints":                   {fixture: "webhook", list: true},
@@ -273,6 +312,7 @@ func TestEveryMethod(t *testing.T) {
 		"DELETE /api/v1/webhook_endpoints/CdFgHj":                      {fixture: "empty"},
 		"GET /api/v1/teams/KjkAJW/suppressions":                        {fixture: "suppression", list: true},
 		"POST /api/v1/teams/KjkAJW/suppressions":                       {fixture: "suppression"},
+		"POST /api/v1/teams/KjkAJW/suppressions/import":                {fixture: "suppression_import"},
 		"DELETE /api/v1/suppressions/YtReWq":                           {fixture: "empty"},
 		"GET /api/v1/teams/KjkAJW/firewall":                            {fixture: "firewall"},
 		"PATCH /api/v1/teams/KjkAJW/firewall":                          {fixture: "firewall"},
@@ -302,10 +342,39 @@ func TestEveryMethod(t *testing.T) {
 		{"clusters.suspend", func() (any, error) { return c.ClustersSuspend(ctx, clusterID) }, "cluster_suspended", false},
 		{"clusters.resume", func() (any, error) { return c.ClustersResume(ctx, clusterID) }, "cluster", false},
 		{"clusters.delete", func() (any, error) { return c.ClustersDelete(ctx, clusterID) }, "cluster_deprovisioned", false},
+		{"clusters.boost", func() (any, error) {
+			return c.ClustersBoost(ctx, clusterID, asMap(t, "cluster_boost_request"))
+		}, "cluster_boosted", false},
+		{"clusters.extendBoost", func() (any, error) {
+			return c.ClustersExtendBoost(ctx, clusterID, asMap(t, "cluster_extend_boost_request"))
+		}, "cluster_boosted", false},
+		{"clusters.cancelBoost", func() (any, error) { return c.ClustersCancelBoost(ctx, clusterID) }, "cluster", false},
+		{"network.list", func() (any, error) { return c.NetworkList(ctx) }, "network", true},
+		{"network.create", func() (any, error) {
+			return c.NetworkCreate(ctx, asMap(t, "network_create_request"))
+		}, "network_assigned", false},
+		{"network.assign", func() (any, error) {
+			return c.NetworkAssign(ctx, asMap(t, "network_create_request"))
+		}, "network_dedicated", false},
+		{"network.unassign", func() (any, error) {
+			return c.NetworkUnassign(ctx, asMap(t, "network_create_request"))
+		}, "network", false},
+		{"network.switch", func() (any, error) {
+			return c.NetworkSwitch(ctx, asMap(t, "network_create_request"))
+		}, "network_assigned", false},
+		{"network.release", func() (any, error) {
+			return c.NetworkRelease(ctx, asMap(t, "network_release_request"))
+		}, "network_released", false},
 		{"sendingDomains.list", func() (any, error) { return c.SendingDomainsList(ctx) }, "sending_domain", true},
 		{"sendingDomains.get", func() (any, error) { return c.SendingDomainsGet(ctx, sendingDomainID) }, "sending_domain", false},
 		{"sendingDomains.create", func() (any, error) {
 			return c.SendingDomainsCreate(ctx, asMap(t, "sending_domain_create_request"))
+		}, "sending_domain", false},
+		{"sendingDomains.update", func() (any, error) {
+			return c.SendingDomainsUpdate(ctx, sendingDomainID, asMap(t, "sending_domain_update_request"))
+		}, "sending_domain_updated", false},
+		{"sendingDomains.refresh", func() (any, error) {
+			return c.SendingDomainsRefresh(ctx, sendingDomainID)
 		}, "sending_domain", false},
 		{"sendingDomains.verify", func() (any, error) { return c.SendingDomainsVerify(ctx, sendingDomainID) }, "sending_domain", false},
 		{"sendingDomains.suspend", func() (any, error) {
@@ -328,7 +397,19 @@ func TestEveryMethod(t *testing.T) {
 		{"messages.list", func() (any, error) { return c.MessagesList(ctx, inboxID) }, "message", true},
 		{"messages.get", func() (any, error) { return c.MessagesGet(ctx, inboxID, messageID) }, "message_show", false},
 		{"events.list", func() (any, error) { return c.EventsList(ctx, clusterID) }, "event", true},
+		{"events.listTeam", func() (any, error) { return c.EventsListTeam(ctx) }, "event", true},
 		{"events.get", func() (any, error) { return c.EventsGet(ctx, eventID) }, "event", false},
+		{"templates.list", func() (any, error) { return c.TemplatesList(ctx) }, "template", true},
+		{"templates.get", func() (any, error) { return c.TemplatesGet(ctx, templateID) }, "template", false},
+		{"templates.create", func() (any, error) {
+			return c.TemplatesCreate(ctx, asMap(t, "template_create_request"))
+		}, "template", false},
+		{"templates.update", func() (any, error) {
+			return c.TemplatesUpdate(ctx, templateID, asMap(t, "template_update_request"))
+		}, "template_updated", false},
+		{"templates.publish", func() (any, error) { return c.TemplatesPublish(ctx, templateID) }, "template", false},
+		{"templates.duplicate", func() (any, error) { return c.TemplatesDuplicate(ctx, templateID) }, "template_duplicated", false},
+		{"templates.delete", func() (any, error) { return c.TemplatesDelete(ctx, templateID) }, "empty", false},
 		{"smtpCredentials.create", func() (any, error) {
 			return c.SMTPCredentialsCreate(ctx, clusterID, asMap(t, "smtp_credential_create_request"))
 		}, "smtp_credential_create", false},
@@ -348,6 +429,9 @@ func TestEveryMethod(t *testing.T) {
 		{"suppressions.create", func() (any, error) {
 			return c.SuppressionsCreate(ctx, asMap(t, "suppression_create_request"))
 		}, "suppression", false},
+		{"suppressions.import", func() (any, error) {
+			return c.SuppressionsImport(ctx, asMap(t, "suppression_import_request"))
+		}, "suppression_import", false},
 		{"suppressions.delete", func() (any, error) { return c.SuppressionsDelete(ctx, suppressionID) }, "empty", false},
 		{"firewall.get", func() (any, error) { return c.FirewallGet(ctx) }, "firewall", false},
 		{"firewall.update", func() (any, error) {

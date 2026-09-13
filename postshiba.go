@@ -218,6 +218,66 @@ func (c *Client) ClustersDelete(ctx context.Context, id string) (any, error) {
 	return c.do(ctx, http.MethodDelete, "/api/v1/clusters/"+id, nil, nil)
 }
 
+func (c *Client) ClustersBoost(ctx context.Context, id string, body any) (any, error) {
+	return c.do(ctx, http.MethodPost, "/api/v1/clusters/"+id+"/boost", body, nil)
+}
+
+func (c *Client) ClustersExtendBoost(ctx context.Context, id string, body any) (any, error) {
+	return c.do(ctx, http.MethodPost, "/api/v1/clusters/"+id+"/extend_boost", body, nil)
+}
+
+func (c *Client) ClustersCancelBoost(ctx context.Context, id string) (any, error) {
+	return c.do(ctx, http.MethodPost, "/api/v1/clusters/"+id+"/cancel_boost", nil, nil)
+}
+
+func (c *Client) NetworkList(ctx context.Context) (any, error) {
+	path, err := c.teamsPath("/network")
+	if err != nil {
+		return nil, err
+	}
+	return c.do(ctx, http.MethodGet, path, nil, nil)
+}
+
+func (c *Client) NetworkCreate(ctx context.Context, body any) (any, error) {
+	path, err := c.teamsPath("/network")
+	if err != nil {
+		return nil, err
+	}
+	return c.do(ctx, http.MethodPost, path, body, nil)
+}
+
+func (c *Client) NetworkAssign(ctx context.Context, body any) (any, error) {
+	path, err := c.teamsPath("/network/assign")
+	if err != nil {
+		return nil, err
+	}
+	return c.do(ctx, http.MethodPost, path, body, nil)
+}
+
+func (c *Client) NetworkUnassign(ctx context.Context, body any) (any, error) {
+	path, err := c.teamsPath("/network/unassign")
+	if err != nil {
+		return nil, err
+	}
+	return c.do(ctx, http.MethodPost, path, body, nil)
+}
+
+func (c *Client) NetworkSwitch(ctx context.Context, body any) (any, error) {
+	path, err := c.teamsPath("/network/switch")
+	if err != nil {
+		return nil, err
+	}
+	return c.do(ctx, http.MethodPost, path, body, nil)
+}
+
+func (c *Client) NetworkRelease(ctx context.Context, body any) (any, error) {
+	path, err := c.teamsPath("/network/release")
+	if err != nil {
+		return nil, err
+	}
+	return c.do(ctx, http.MethodPost, path, body, nil)
+}
+
 func (c *Client) SendingDomainsList(ctx context.Context) (any, error) {
 	path, err := c.teamsPath("/sending_domains")
 	if err != nil {
@@ -236,6 +296,14 @@ func (c *Client) SendingDomainsCreate(ctx context.Context, body any) (any, error
 		return nil, err
 	}
 	return c.do(ctx, http.MethodPost, path, body, nil)
+}
+
+func (c *Client) SendingDomainsUpdate(ctx context.Context, id string, body any) (any, error) {
+	return c.do(ctx, http.MethodPatch, "/api/v1/sending_domains/"+id, body, nil)
+}
+
+func (c *Client) SendingDomainsRefresh(ctx context.Context, id string) (any, error) {
+	return c.do(ctx, http.MethodPost, "/api/v1/sending_domains/"+id+"/refresh", nil, nil)
 }
 
 func (c *Client) SendingDomainsVerify(ctx context.Context, id string) (any, error) {
@@ -331,6 +399,14 @@ func (c *Client) EventsList(ctx context.Context, clusterID string) (any, error) 
 	return c.do(ctx, http.MethodGet, path, nil, nil)
 }
 
+func (c *Client) EventsListTeam(ctx context.Context) (any, error) {
+	path, err := c.teamsPath("/message_events")
+	if err != nil {
+		return nil, err
+	}
+	return c.do(ctx, http.MethodGet, path, nil, nil)
+}
+
 func (c *Client) EventsGet(ctx context.Context, id string) (any, error) {
 	return c.do(ctx, http.MethodGet, "/api/v1/message_events/"+id, nil, nil)
 }
@@ -379,6 +455,42 @@ func (c *Client) WebhooksDelete(ctx context.Context, id string) (any, error) {
 	return c.do(ctx, http.MethodDelete, "/api/v1/webhook_endpoints/"+id, nil, nil)
 }
 
+func (c *Client) TemplatesList(ctx context.Context) (any, error) {
+	path, err := c.teamsPath("/templates")
+	if err != nil {
+		return nil, err
+	}
+	return c.do(ctx, http.MethodGet, path, nil, nil)
+}
+
+func (c *Client) TemplatesGet(ctx context.Context, id string) (any, error) {
+	return c.do(ctx, http.MethodGet, "/api/v1/templates/"+id, nil, nil)
+}
+
+func (c *Client) TemplatesCreate(ctx context.Context, body any) (any, error) {
+	path, err := c.teamsPath("/templates")
+	if err != nil {
+		return nil, err
+	}
+	return c.do(ctx, http.MethodPost, path, body, nil)
+}
+
+func (c *Client) TemplatesUpdate(ctx context.Context, id string, body any) (any, error) {
+	return c.do(ctx, http.MethodPatch, "/api/v1/templates/"+id, body, nil)
+}
+
+func (c *Client) TemplatesPublish(ctx context.Context, id string) (any, error) {
+	return c.do(ctx, http.MethodPost, "/api/v1/templates/"+id+"/publish", nil, nil)
+}
+
+func (c *Client) TemplatesDuplicate(ctx context.Context, id string) (any, error) {
+	return c.do(ctx, http.MethodPost, "/api/v1/templates/"+id+"/duplicate", nil, nil)
+}
+
+func (c *Client) TemplatesDelete(ctx context.Context, id string) (any, error) {
+	return c.do(ctx, http.MethodDelete, "/api/v1/templates/"+id, nil, nil)
+}
+
 func (c *Client) SuppressionsList(ctx context.Context) (any, error) {
 	path, err := c.teamsPath("/suppressions")
 	if err != nil {
@@ -389,6 +501,14 @@ func (c *Client) SuppressionsList(ctx context.Context) (any, error) {
 
 func (c *Client) SuppressionsCreate(ctx context.Context, body any) (any, error) {
 	path, err := c.teamsPath("/suppressions")
+	if err != nil {
+		return nil, err
+	}
+	return c.do(ctx, http.MethodPost, path, body, nil)
+}
+
+func (c *Client) SuppressionsImport(ctx context.Context, body any) (any, error) {
+	path, err := c.teamsPath("/suppressions/import")
 	if err != nil {
 		return nil, err
 	}

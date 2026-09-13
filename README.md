@@ -37,6 +37,18 @@ Pass a cluster id to pin `X-Capsule-Cluster-Id`. Omit it and the header is not s
 res, err := client.EmailsSend(ctx, body, &postshiba.SendOptions{ClusterID: "NmQpXr"})
 ```
 
+Send a published template. `EmailsSend` takes the same opaque body. There is no `SendTemplate` method.
+
+```go
+res, err := client.EmailsSend(ctx, map[string]any{
+	"to": []string{"you@example.com"},
+	"template": map[string]any{
+		"id":        "welcome",
+		"variables": map[string]any{"name": "Ada"},
+	},
+})
+```
+
 Cluster send can set `Idempotency-Key` and `"sandbox": true`.
 
 ```go
@@ -68,6 +80,20 @@ cluster, err := client.ClustersUpdate(ctx, "NmQpXr", map[string]any{
 cluster, err := client.ClustersSuspend(ctx, "NmQpXr")
 cluster, err := client.ClustersResume(ctx, "NmQpXr")
 cluster, err := client.ClustersDelete(ctx, "NmQpXr")
+cluster, err := client.ClustersBoost(ctx, "NmQpXr", map[string]any{"sku": "small_to_large"})
+cluster, err := client.ClustersExtendBoost(ctx, "NmQpXr", map[string]any{"idempotency_key": "extend-1"})
+cluster, err := client.ClustersCancelBoost(ctx, "NmQpXr")
+```
+
+### Network
+
+```go
+ips, err := client.NetworkList(ctx)
+ip, err := client.NetworkCreate(ctx, map[string]any{"ip_address_id": "IpQwEr", "cluster_id": "NmQpXr"})
+ip, err := client.NetworkAssign(ctx, map[string]any{"ip_address_id": "IpQwEr", "cluster_id": "NmQpXr"})
+ip, err := client.NetworkUnassign(ctx, map[string]any{"ip_address_id": "IpQwEr", "cluster_id": "NmQpXr"})
+ip, err := client.NetworkSwitch(ctx, map[string]any{"ip_address_id": "IpQwEr", "cluster_id": "NmQpXr"})
+ip, err := client.NetworkRelease(ctx, map[string]any{"ip_address_id": "IpQwEr"})
 ```
 
 ### Sending domains
@@ -78,6 +104,10 @@ domain, err := client.SendingDomainsGet(ctx, "HsVtYk")
 domain, err := client.SendingDomainsCreate(ctx, map[string]any{
 	"sending_domain": map[string]any{"name": "mail.example.com", "tenant_id": "WbLcFd"},
 })
+domain, err := client.SendingDomainsUpdate(ctx, "HsVtYk", map[string]any{
+	"sending_domain": map[string]any{"dkim_selector": "s1", "dkim_manual": true},
+})
+domain, err := client.SendingDomainsRefresh(ctx, "HsVtYk")
 domain, err := client.SendingDomainsVerify(ctx, "HsVtYk")
 domain, err := client.SendingDomainsSuspend(ctx, "HsVtYk")
 domain, err := client.SendingDomainsResume(ctx, "HsVtYk")
@@ -102,7 +132,12 @@ _, err = client.TenantsDelete(ctx, "WbLcFd")
 inboxes, err := client.InboxesList(ctx)
 inbox, err := client.InboxesGet(ctx, "PqRzMn")
 inbox, err := client.InboxesCreate(ctx, map[string]any{
-	"inbox": map[string]any{"name": "agent", "webhook_url": "https://hooks.example.com/mail"},
+	"inbox": map[string]any{
+		"name":        "agent",
+		"webhook_url": "https://hooks.example.com/mail",
+		"host":        "inbound.example.com",
+		"forward_to":  "you@example.com",
+	},
 })
 inbox, err := client.InboxesVerify(ctx, "PqRzMn")
 inbox, err := client.InboxesDelete(ctx, "PqRzMn")
@@ -119,6 +154,7 @@ file, err := client.MessagesDownloadAttachment(ctx, "PqRzMn", "GxTyVu", 1)
 ### Events
 
 ```go
+events, err := client.EventsListTeam(ctx)
 events, err := client.EventsList(ctx, "NmQpXr")
 event, err := client.EventsGet(ctx, "JkLmNp")
 ```
@@ -157,12 +193,39 @@ _, err = client.WebhooksDelete(ctx, "CdFgHj")
 
 The secret is present on get and create. It is omitted on list and update.
 
+### Templates
+
+```go
+templates, err := client.TemplatesList(ctx)
+tpl, err := client.TemplatesGet(ctx, "welcome")
+tpl, err := client.TemplatesCreate(ctx, map[string]any{
+	"email_template": map[string]any{
+		"name":    "Welcome",
+		"alias":   "welcome",
+		"subject": "Hi {{ name }}",
+		"html":    "<p>Hi {{ name }}</p>",
+	},
+})
+tpl, err := client.TemplatesUpdate(ctx, "TpLmQr", map[string]any{
+	"email_template": map[string]any{"subject": "Welcome, {{ name }}"},
+})
+tpl, err := client.TemplatesPublish(ctx, "TpLmQr")
+tpl, err := client.TemplatesDuplicate(ctx, "TpLmQr")
+_, err = client.TemplatesDelete(ctx, "TpLmQr")
+```
+
+Send uses the published snapshot. `TemplatesGet` and member routes accept the public id or the alias.
+
 ### Suppressions
 
 ```go
 rows, err := client.SuppressionsList(ctx)
 row, err := client.SuppressionsCreate(ctx, map[string]any{
 	"suppression": map[string]any{"email": "blocked@example.com", "tenant_id": "WbLcFd"},
+})
+row, err := client.SuppressionsImport(ctx, map[string]any{
+	"emails":    []string{"blocked@example.com", "old@example.com"},
+	"tenant_id": "WbLcFd",
 })
 _, err = client.SuppressionsDelete(ctx, "YtReWq")
 ```
